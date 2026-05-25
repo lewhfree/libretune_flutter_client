@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:record/record.dart';
-import 'package:path_provider/path_provider.dart';
+import 'dart:typed_data';
+import 'dart:async';
 
 void main() async {
   await AudioRecorder().hasPermission();
@@ -17,29 +18,32 @@ class MyApp extends StatelessWidget {
 }
 
 void startAnalyze() async {
+  print("startanalyze");
   WidgetsFlutterBinding.ensureInitialized();
-
-  // final dir = await getApplicationSupportDirectory();
-
-  // final path = '${dir.path}/myFile.m4a';
 
   final record = AudioRecorder();
   if (await record.hasPermission()) {
-    // Start recording to file
-    // await record.start(const RecordConfig(), path: path);
+    List<Uint8List> buf = [];
+    Timer? _timer;
     final stream = await record.startStream(
       const RecordConfig(
         encoder: AudioEncoder.pcm16bits,
-        sampleRate: 24000,
+        sampleRate: 8000,
         numChannels: 1,
         autoGain: true,
       ),
     );
-    stream.listen((audioChunk) {});
+    print("1");
+    final stram = stream.listen((audioChunk) {
+      buf.add(audioChunk);
+    });
 
-    await Future.delayed(const Duration(seconds: 3));
-    await record.stop();
-    print("finished recording");
+    _timer = Timer(const Duration(seconds: 10), () async {
+      await record.stop();
+      await stram.cancel();
+      // do the concatination
+      print("do concat");
+    });
   }
   record.dispose();
 }
