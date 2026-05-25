@@ -1,34 +1,48 @@
-// Importing important packages require to connect
-// Flutter and Dart
 import 'package:flutter/material.dart';
+import 'package:record/record.dart';
+import 'package:path_provider/path_provider.dart';
 
-// Main Function
-void main() {
-  // Giving command to runApp() to run the app.
-
-  /* The purpose of the runApp() function is to attach
-the given widget to the screen. */
+void main() async {
+  await AudioRecorder().hasPermission();
   runApp(const MyApp());
 }
 
-// Widget is used to create UI in flutter framework.
-
-/* StatelessWidget is a widget, which does not maintain
-any state of the widget. */
-
-/* MyApp extends StatelessWidget and overrides its
-build method. */
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(home: MyHomePage(title: 'Home page'));
   }
 }
 
-void startAnalyze() {}
+void startAnalyze() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // final dir = await getApplicationSupportDirectory();
+
+  // final path = '${dir.path}/myFile.m4a';
+
+  final record = AudioRecorder();
+  if (await record.hasPermission()) {
+    // Start recording to file
+    // await record.start(const RecordConfig(), path: path);
+    final stream = await record.startStream(
+      const RecordConfig(
+        encoder: AudioEncoder.pcm16bits,
+        sampleRate: 24000,
+        numChannels: 1,
+        autoGain: true,
+      ),
+    );
+    stream.listen((audioChunk) {});
+
+    await Future.delayed(const Duration(seconds: 3));
+    await record.stop();
+    print("finished recording");
+  }
+  record.dispose();
+}
 
 class MyHomePage extends StatelessWidget {
   MyHomePage({Key? key, required this.title}) : super(key: key);
